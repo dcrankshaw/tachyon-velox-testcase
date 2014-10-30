@@ -11,29 +11,53 @@ import java.nio.ByteBuffer
 import java.io.ByteArrayOutputStream
 import scala.collection.immutable.TreeMap
 import tachyon.r.sorted.{Utils => TUtils}
+import scala.util.Random
 
 object TachyonKVExercise {
 
   def main(args: Array[String]) {
     // tachyonlocation = "tachyon://ec2-1.1.1.1.compute-1.amazonaws.com:19998/test-store
-    val tachyonLocation: String = args(1)
+    println(args.mkString(", "))
+    val tachyonLocation: String = args(0)
+    val sleepTime: Long = args(1).toLong
+    val numEntries: Int = args(2).toInt
     // val testStore = "test-store"
     val numPartitions = 3
-    val numEntries = 50
+    // val numEntries = 1000000
+    val rand = new Random
+    val bigArray = new Array[Double](100)
+    var i = 0
+    while (i < bigArray.size) {
+      bigArray(i) = rand.nextDouble()
+      i += 1
+    }
+
+    val kryo = KryoThreadLocal.kryoTL.get
+    val buffer = ByteBuffer.allocate(bigArray.size*8*8*2)
+    val serArray = kryo.serialize(bigArray, buffer).array
+
 
     val kvstore = ClientStore.createStore(new TachyonURI(tachyonLocation))
+    println("Created kv store")
     val testData = (0 until numEntries).map {i =>
-      (TachyonUtils.long2ByteArr(i), TachyonUtils.long2ByteArr(i*7))
+      if (i % 1000 == 0) {
+        println(s"processing entry $i")
+      }
+      (TachyonUtils.long2ByteArr(i), serArray)
     }
     val sortedObs = TreeMap(testData.toArray:_*)(ByteOrdering)
     // write to KV store
+    println("Writing to tachyon")
     writeMapToTachyon(sortedObs, kvstore, numPartitions)
 
-    Thread.sleep(10000L)
+    println("Sleeping")
+    Thread.sleep(sleepTime)
+    val kvstoreGet = ClientStore.getStore(new TachyonURI(tachyonLocation))
 
     // Try getting from KV store
-    val results = (0 until numEntries).map { i =>
-      val result = TachyonUtils.byteArr2Long(kvstore.get(TachyonUtils.long2ByteArr(i)))
+    println("Reading from Tachyon")
+    val results = (0 until 100).map { i =>
+      val result = TachyonUtils.byteArr2Long(kvstoreGet.get(TachyonUtils.long2ByteArr(i)))
       s"($i -> $result)"
       // (i, result)
     }
@@ -57,6 +81,10 @@ object TachyonKVExercise {
       val v: Array[Byte] = map(k)
       val p: Int = partition + (i / splitPoint)
       store.put(p, k, v)
+      if (i % 1000 == 0) {
+        println(s"Writing key $i")
+
+      }
       i += 1
     }
 
