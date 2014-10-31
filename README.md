@@ -23,3 +23,20 @@ to try to create an `InetAddress` with port=-1, triggering an exception.
 	at java.lang.Thread.run(Thread.java:745)
 
 ```
+
+And here is the stack trace from the client program:
+```
+Exception in thread "main" java.lang.IllegalArgumentException: port out of range:-1
+        at java.net.InetSocketAddress.checkPort(InetSocketAddress.java:143)
+        at java.net.InetSocketAddress.<init>(InetSocketAddress.java:224)
+        at tachyon.r.sorted.ClientStore.get(ClientStore.java:88)
+        at edu.berkeley.TachyonKVExercise$$anonfun$2.apply(TachyonKVExercise.scala:60)
+        at edu.berkeley.TachyonKVExercise$$anonfun$2.apply(TachyonKVExercise.scala:59)
+        at scala.collection.TraversableLike$$anonfun$map$1.apply(TraversableLike.scala:244)
+        at scala.collection.TraversableLike$$anonfun$map$1.apply(TraversableLike.scala:244)
+        at scala.collection.immutable.Range.foreach(Range.scala:141)
+        at scala.collection.TraversableLike$class.map(TraversableLike.scala:244)
+        at scala.collection.AbstractTraversable.map(Traversable.scala:105)
+        at edu.berkeley.TachyonKVExercise$.main(TachyonKVExercise.scala:59)
+        at edu.berkeley.TachyonKVExercise.main(TachyonKVExercise.scala)
+```
