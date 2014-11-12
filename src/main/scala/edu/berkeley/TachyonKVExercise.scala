@@ -36,7 +36,6 @@ object TachyonKVExercise {
     val buffer = ByteBuffer.allocate(bigArray.size*8*8*2)
     val serArray = kryo.serialize(bigArray, buffer).array
 
-
     val kvstore = ClientStore.createStore(new TachyonURI(tachyonLocation))
     println("Created kv store")
     val testData = (0 until numEntries).map {i =>
@@ -55,13 +54,16 @@ object TachyonKVExercise {
     val kvstoreGet = ClientStore.getStore(new TachyonURI(tachyonLocation))
 
     // Try getting from KV store
-    println("Reading from Tachyon")
-    val results = (0 until 100).map { i =>
-      val result = TachyonUtils.byteArr2Long(kvstoreGet.get(TachyonUtils.long2ByteArr(i)))
-      s"($i -> $result)"
+    println(s"Reading from Tachyon, time is: ${System.currentTimeMillis}")
+    val results = (0 until 2).map { i =>
+      val result = kvstoreGet.get(TachyonUtils.long2ByteArr(i))
+      val resultArray = kryo.deserialize(ByteBuffer.wrap(result)).asInstanceOf[Array[Double]]
+      print(s"result length: ${result.length}")
+      s"($i -> ${resultArray.mkString(",")})"
       // (i, result)
     }
 
+    println(s"Array should be: ${bigArray.mkString(",")}")
     println(s"Results: ${results.mkString(", ")}")
   }
 
